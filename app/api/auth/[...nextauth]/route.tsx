@@ -1,4 +1,5 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 
@@ -17,4 +18,7 @@ export const authOptions: NextAuthOptions = {
   ],
 };
 
-export default NextAuth(authOptions);
+// export default NextAuth(authOptions); //old page directory method
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

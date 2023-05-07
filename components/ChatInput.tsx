@@ -1,0 +1,106 @@
+"use client";
+
+import { db } from "@/firebase";
+import { PaperAirplaneIcon } from "@heroicons/react/20/solid";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useSession } from "next-auth/react";
+import { FormEvent, useState } from "react";
+import { toast } from "react-hot-toast";
+
+type Props = {
+  chatId: string;
+};
+
+export default function ChatInput({ chatId }: Props) {
+  const [prompt, setPrompt] = useState("");
+  const { data: session } = useSession();
+
+  // useSWR to get model
+  const model = "text-davinci-003";
+
+  const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    //do some defensive program first
+    if (!prompt) return;
+
+    const input = prompt.trim();
+    setPrompt("");
+
+    const message: Message = {
+      text: input,
+      // Local timezone code : new Date().toISOString(),
+      //create Server TimeStamp
+      createdAt: serverTimestamp(),
+      user: {
+        _id: session?.user?.email!,
+        name: session?.user?.name!,
+        avatar:
+          session?.user?.image! ||
+          `https://ui-avatars.com/api/?name={session?.user?.name}`,
+      },
+    };
+
+    await addDoc(
+      collection(
+        db,
+        "users",
+        session?.user?.email!,
+        "chats",
+        chatId,
+        "messages"
+      ),
+      message
+    );
+
+    //Toast notification to say Loading!
+    const notification = toast.loading("ChatGPT is thinking...");
+
+    //fetch method to backend and communicate with your own API
+    // implement SWR to get the model
+    await fetch(`/api/askQuestion`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: input,
+        chatId,
+        model,
+        session,
+      }),
+    }).then(() => {
+      //Toast notification to say successful!
+      toast.success("ChatGPT has responded!", {
+        id: notification,
+      });
+    });
+  };
+  return (
+    <div className="bg-gray-700/50 rounded-lg ">
+      <form
+        // onSubmit={(e) => sendMessage}
+        // point the cursor to the "e" to check the type for e -> FormEvent<HTMLFormElement>
+        onSubmit={sendMessage}
+        className="p-5 space-x-5 flex"
+      >
+        <input
+          //text-gray-400 = input guideline that flashes
+          className="bg-transparent focus:outline-none text-sm text-gray-400 flex-1
+          disbale:cursor-not-allowed disabled:text-gray-300"
+          disabled={!session}
+          onChange={(e) => setPrompt(e.target.value)}
+          type="text"
+          placeholder="Type your message here..."
+        />
+        <button
+          disabled={!prompt || !session}
+          type="submit"
+          className="bg-[#11A37F] hover:opacity-50 text-white font-bold px-4 py-2 rounded disabled:bg-gray-300 disabled:cursor-not-allowed "
+        >
+          <PaperAirplaneIcon className="h-4 w-4 -rotate-45 text-gray-400" />
+        </button>
+      </form>
+    </div>
+  );
+}
