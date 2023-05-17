@@ -16,7 +16,7 @@ export default function ChatInput({ chatId }: Props) {
   const { data: session } = useSession();
 
   // useSWR to get model
-  const model = "gpt-3.5-turbo";
+  const model = "text-davinci-003";
 
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,13 +58,13 @@ export default function ChatInput({ chatId }: Props) {
 
     //fetch method to backend and communicate with your own API
     // implement SWR to get the model
-    const res = await fetch(`/api/askQuestion`, {
+    await fetch(`/api/askQuestion`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        prompt: input,
+        prompt,
         chatId,
         model,
         session,
@@ -75,9 +75,7 @@ export default function ChatInput({ chatId }: Props) {
         id: notification,
       });
     });
-    // const textSent = await res.json();
   };
-
   return (
     <div className="bg-gray-700/50 rounded-lg ">
       <form

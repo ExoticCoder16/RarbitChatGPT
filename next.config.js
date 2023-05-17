@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["links.papereact.com", "static.cdnlogo.com"],
+    domains: [
+      "links.papareact.com",
+      "brandlogovector.com",
+      "brandlogovector.com/wp-content",
+      "static.cdnlogo.com",
+    ],
   },
   experimental: {
     appDir: true,

@@ -1,49 +1,69 @@
-//Next.js API route support: https://nextjs.org/docs/api-routes/intorudction
-import { NextApiRequest, NextApiResponse } from "next";
-import query from "@/lib/queryApi";
+import { NextResponse } from "next/server";
+// import query from "@/lib/queryApi";
 import admin from "firebase-admin";
 import { adminDb } from "@/firebaseAdmin";
+import openai from "@/lib/chatgpt";
 
-type Data = {
-  answer: string;
-};
+// type Data = {
+//   answer: string;
+// };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  // get pout the 4 elements from the chatInput.tsx from the request body
-  const { prompt, chatId, model, session } = req.body;
+export async function POST(request: Request) {
+  // extract data in the body of the POST req from chatInput to this API
+  const { prompt, chatId, model, session } = await request.json();
 
   if (!prompt) {
-    res.status(400).json({ answer: "Please provide a prompt!" });
-    return;
+    return (
+      NextResponse.json({ answer: "Please provide a prompt!" }), { status: 400 }
+    );
   }
   if (!chatId) {
-    res.status(400).json({ answer: "Please provide a valid chat ID!" });
-    return;
+    return (
+      NextResponse.json({ answer: "Please provide a prompt!" }), { status: 400 }
+    );
   }
 
   // ChatGPT Query
-  const response = await query(prompt, chatId, model);
+  const response = await openai.createChatCompletion({
+    model,
+    messages: [
+      { role: "system", content: "You are a helpful assistant" },
+      { role: "user", content: `${prompt}` },
+    ],
+    temperature: 0.9,
+    max_tokens: 1000,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+  });
+
+  const { data } = response;
+
+  const answer = data.choices[0].message?.content;
 
   const message: Message = {
-    text: response || "ChatGPT was unable to find an answer for that",
+    text: answer,
     createdAt: admin.firestore.Timestamp.now(),
     user: {
       _id: "ChatGPT",
       name: "ChatGPT",
-      avatar: "https://links.papereact.com/89k",
+      // avatar: "https://links.papareact.com/89k",
+      avatar:
+        "https://brandlogovector.com/wp-content/uploads/2023/01/ChatGPT-Icon-Logo-PNG.png",
     },
   };
 
+  console.log(message);
+
   await adminDb
-    .collection("user")
-    .doc(session)
+    .collection("users")
+    .doc(session?.user?.email)
     .collection("chats")
     .doc(chatId)
     .collection("messages")
     .add(message);
 
-  res.status(200).json({ answer: message.text });
+  // Produce a response with the given JSON body.
+  // res.status(200).json({ answer: message.text });
+  return NextResponse.json({ answer: message.text });
 }

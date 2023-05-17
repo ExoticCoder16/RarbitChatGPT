@@ -6,6 +6,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/firebase";
 import ChatRow from "./ChatRow";
 import NewChat from "./NewChat";
+import ModelSelection from "./ModelSelection";
 
 export default function SideBar() {
   const { data: session } = useSession();
@@ -24,6 +25,10 @@ export default function SideBar() {
       <div className="flex-1">
         <div>
           <NewChat />
+
+          <div className="hidden sm:inline">
+            <ModelSelection />
+          </div>
         </div>
         {/* chat = each object in the "chats" column */}
         {chats?.docs.map((chat) => (

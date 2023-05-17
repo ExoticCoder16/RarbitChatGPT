@@ -1,7 +1,6 @@
-// import { serverTimestamp } from "firebase/firestore";
-
 interface Message {
-  text: string;
+  text: string | ChatCompletionResponseMessage;
+  //   text: AxiosResponse<CreateCompletionResponse, any>;
   createdAt: admin.firestore.serverTimestamp;
   user: {
     _id: string;
